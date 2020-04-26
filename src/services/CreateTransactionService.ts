@@ -1,8 +1,10 @@
-import { getRepository } from 'typeorm';
+import { getRepository, getCustomRepository } from 'typeorm';
 import AppError from '../errors/AppError';
 
 import Transaction from '../models/Transaction';
 import Category from '../models/Category';
+
+import TransactionsRepository from '../repositories/TransactionsRepository';
 
 interface Request {
   title: string;
@@ -27,6 +29,18 @@ class CreateTransactionService {
       throw new AppError('Transaction type not permitted.', 400);
     }
 
+    const transactionsRepository = getCustomRepository(TransactionsRepository);
+    // Checks if outcome is valid after balance
+    if (type === 'outcome') {
+      const { total } = await transactionsRepository.getBalance();
+      if (total - value < 0) {
+        throw new AppError(
+          'You have no balance to complete this transaction.',
+          400,
+        );
+      }
+    }
+
     // Checks if category already exists
     const categoriesRepository = getRepository(Category);
     const categoryExists = await categoriesRepository.findOne({
@@ -45,7 +59,6 @@ class CreateTransactionService {
       categoryModel = categoryExists;
     }
 
-    const transactionsRepository = getRepository(Transaction);
     const transaction = transactionsRepository.create({
       title,
       value,
