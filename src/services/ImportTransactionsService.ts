@@ -74,8 +74,6 @@ class ImportTransactionsService {
 
     const usedCategories = [...categoriesFound, ...newCategories];
 
-    console.log('usedCategories', usedCategories);
-
     const newTransactions = transactionsRepository.create(
       transactions.map((transaction: CSVtransaction) => ({
         title: transaction.title,
